@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klangfeld – Rücklagen-Rechner</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f4;
+    --bg3: #eeece9;
+    --text: #1c1917;
+    --text2: #57534e;
+    --text3: #a8a29e;
+    --border: #e7e5e4;
+    --border2: #d6d3d1;
+    --green-bg: #EAF3DE;
+    --green-text: #27500A;
+    --green-border: #639922;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --amber-border: #EF9F27;
+    --red-bg: #FCEBEB;
+    --red-text: #501313;
+    --red-border: #E24B4A;
+    --blue-bg: #EBF5FB;
+    --blue-text: #185FA5;
+    --teal-bg: #E8F8F5;
+    --teal-text: #0F6E56;
+    --purple-bg: #EEEDFE;
+    --purple-text: #3C3489;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 24px 16px;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header .logo {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #1D9E75, #2980B9);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+  }
+
+  header h1 { font-size: 20px; font-weight: 600; color: var(--text); }
+  header p { font-size: 13px; color: var(--text2); margin-top: 1px; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 24px 0 10px;
+  }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  @media (max-width: 480px) { .grid3 { grid-template-columns: 1fr; } }
+
+  .mcard {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+  }
+  .mcard .label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .mcard .value { font-size: 20px; font-weight: 600; color: var(--text); }
+  .mcard .sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .mcard.green { background: var(--green-bg); border-color: var(--green-border); }
+  .mcard.green .value { color: var(--green-text); }
+  .mcard.red { background: var(--red-bg); border-color: var(--red-border); }
+  .mcard.red .value { color: var(--red-text); }
+  .mcard.amber { background: var(--amber-bg); border-color: var(--amber-border); }
+  .mcard.amber .value { color: var(--amber-text); }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .slider-label { font-size: 13px; color: var(--text2); width: 220px; flex-shrink: 0; }
+  .slider-val { font-size: 13px; font-weight: 600; color: var(--text); width: 90px; text-align: right; flex-shrink: 0; }
+
+  input[type=range] {
+    flex: 1;
+    accent-color: #1D9E75;
+    height: 4px;
+    cursor: pointer;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .b-mini { background: var(--blue-bg); color: var(--blue-text); }
+  .b-werk { background: var(--teal-bg); color: var(--teal-text); }
+  .b-s1 { background: var(--amber-bg); color: var(--amber-text); }
+  .b-s2 { background: var(--blue-bg); color: var(--blue-text); }
+  .b-s3 { background: var(--green-bg); color: var(--green-text); }
+  .b-extra { background: var(--purple-bg); color: var(--purple-text); }
+  .b-fix { background: var(--bg3); color: var(--text2); font-size: 10px; padding: 2px 6px; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  .stage-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: var(--bg);
+  }
+
+  .stage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .stage-title { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  .stage-status {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .status-ok { background: var(--green-bg); color: var(--green-text); }
+  .status-warn { background: var(--amber-bg); color: var(--amber-text); }
+  .status-err { background: var(--red-bg); color: var(--red-text); }
+  .status-save { background: var(--blue-bg); color: var(--blue-text); }
+
+  .row-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .row-item:last-child { border-bottom: none; }
+  .rk { color: var(--text2); }
+  .rv { font-weight: 600; }
+  .rv.plus { color: var(--green-text); }
+  .rv.minus { color: var(--red-text); }
+  .rv.save { color: var(--blue-text); }
+  .rv.extra { color: var(--purple-text); }
+
+  .row-highlight {
+    background: var(--bg2);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+
+  .alert {
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin: 10px 0;
+  }
+  .alert.ok { background: var(--green-bg); border-left: 3px solid var(--green-border); color: var(--green-text); }
+  .alert.warn { background: var(--amber-bg); border-left: 3px solid var(--amber-border); color: var(--amber-text); }
+  .alert.err { background: var(--red-bg); border-left: 3px solid var(--red-border); color: var(--red-text); }
+
+  .chart-wrap { position: relative; width: 100%; height: 280px; margin-top: 10px; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend .dot { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
+
+  footer {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎵</div>
+  <div>
+    <h1>Klangfeld – Rücklagen-Rechner</h1>
+    <p>Finanzplanung für deine UG · Stage 1 → 2 → 3</p>
+  </div>
+</header>
+
+<div class="section-title">Personal (je 10h/Woche)</div>
+<div class="slider-row">
+  <div class="slider-label"><span class="badge b-mini">Minijobler</span> Anzahl</div>
+  <input type="range" min="0" max="10" step="1" value="0" id="n_mini" oninput="update()">
+  <div class="slider-val" id="n_mini-out">0 Personen</div>
+</div>
+<div class="slider-row">
+  <div class="slider-label"><span class="badge b-werk">Werkstudenten</span> Anzahl</div>
+  <input type="range" min="0" max="10" step="1" value="5" id="n_werk" oninput="update()">
+  <div class="slider-val" id="n_werk-out">5 Personen</div>
+</div>
+
+<hr class="divider">
+
+<div class="section-title">Sparquoten</div>
+<div class="slider-row">
+  <div class="slider-label"><span class="badge b-s1">Stage 1</span> Sparquote <span class="badge b-fix">1 Monat fix</span></div>
+  <input type="range" min="0" max="100" step="5" value="100" id="s1q" oninput="update()">
+  <div class="slider-val" id="s1q-out">100%</div>
+</div>
+<div class="slider-row">
+  <div class="slider-label"><span class="badge b-s2">Stage 2</span> Sparquote <span class="badge b-fix">1 Monat fix</span></div>
+  <input type="range" min="0" max="100" step="5" value="50" id="s2q" oninput="update()">
+  <div class="slider-val" id="s2q-out">50%</div>
+</div>
+<div class="slider-row">
+  <div class="slider-label"><span class="badge b-s3">Stage 3</span> Sparquote</div>
+  <input type="range" min="0" max="100" step="5" value="30" id="s3q" oninput="update()">
+  <div class="slider-val" id="s3q-out">30%</div>
+</div>
+
+<hr class="divider">
+
+<div class="section-title">Sonstige Einnahmen</div>
+<div class="slider-row">
+  <div class="slider-label"><span class="badge b-extra">Zusatzeinnahmen</span> pro Monat</div>
+  <input type="range" min="0" max="1000" step="100" value="0" id="extra" oninput="update()">
+  <div class="slider-val" id="extra-out">0 €</div>
+</div>
+
+<hr class="divider">
+
+<div class="section-title">Monatsdetails je Stage</div>
+<div id="stage-details"></div>
+
+<hr class="divider">
+
+<div class="section-title">Rücklagen-Übersicht</div>
+<div class="grid3" id="cards"></div>
+<div id="fazit"></div>
+
+<hr class="divider">
+
+<div class="section-title">Rücklagen-Aufbau über die Zeit</div>
+<div class="chart-wrap">
+  <canvas id="chart"></canvas>
+</div>
+<div class="legend">
+  <span><span class="dot" style="background:#1D9E75"></span>Rücklagen</span>
+  <span><span class="dot" style="background:#E24B4A;height:2px"></span>Ziel</span>
+</div>
+
+<footer>Klangfeld UG · Finanzplanung · Alle Zahlen sind Richtwerte · Kein Ersatz für Steuerberatung</footer>
+
+<script>
+let chart = null;
+const KOSTEN_MINI = 716, KOSTEN_WERK = 672, SONSTIGE = 1200, RAUMMIETE = 150;
+const MAT_PP = 53.77, TEILN = 10;
+const STAGES = [
+  { label:'Stage 1 — Mai', ev:2,  ein:1000, fix_t:0,     fix_o:118.7, fix_v:99.21 },
+  { label:'Stage 2 — Juni', ev:4,  ein:1300, fix_t:54.39, fix_o:84.50, fix_v:99.21 },
+  { label:'Stage 3 — August', ev:8,  ein:1700, fix_t:27.19, fix_o:42.25, fix_v:99.21 },
+];
+
+function fmt(n){ return Math.round(n).toLocaleString('de-DE')+' €' }
+
+function calc(s, personal, sparQ, extra){
+  const mat = MAT_PP * TEILN;
+  const fixEv = s.fix_t + s.fix_o + s.fix_v;
+  const kostenEv = (fixEv + mat + RAUMMIETE) * s.ev;
+  const umsatz = s.ein * s.ev;
+  const ges = umsatz + extra;
+  const roh = ges - kostenEv - personal - SONSTIGE;
+  const steuer = Math.max(0, roh) * 0.30;
+  const netto = roh - steuer;
+  const spar = Math.max(0, netto) * sparQ;
+  return { umsatz, extra, ges, fixGes: fixEv*s.ev, matGes: mat*s.ev, raumGes: RAUMMIETE*s.ev,
+           personal, roh, steuer, netto, spar, verb: netto-spar,
+           sparQ, ev:s.ev, label:s.label, fixEv, mat };
+}
+
+function stageCard(d, idx){
+  const verlust = d.roh < 0;
+  const badges = ['b-s1','b-s2','b-s3'];
+  const statusCls = verlust ? 'status-err' : d.spar > 0 ? 'status-save' : 'status-warn';
+  const statusTxt = verlust ? 'Verlust!' : d.spar > 0 ? fmt(d.spar)+'/Mon. gespart' : 'kein Sparen';
+  return `
+  <div class="stage-card">
+    <div class="stage-header">
+      <div class="stage-title">${d.label} — ${d.ev} Events/Monat</div>
+      <span class="stage-status ${statusCls}">${statusTxt}</span>
+    </div>
+    <div class="row-item"><span class="rk">Workshop-Einnahmen</span><span class="rv plus">${fmt(d.umsatz)}</span></div>
+    ${d.extra>0?`<div class="row-item"><span class="rk">+ Sonstige Einnahmen</span><span class="rv extra">+ ${fmt(d.extra)}</span></div>`:''}
+    <div class="row-item"><span class="rk">= Gesamteinnahmen</span><span class="rv plus">${fmt(d.ges)}</span></div>
+    <div class="row-item"><span class="rk">− Echte Fixkosten (Technik, Marketing, Verpflegung)</span><span class="rv minus">${fmt(d.fixGes)}</span></div>
+    <div class="row-item"><span class="rk">− Material (${fmt(d.mat)}/Person × ${TEILN})</span><span class="rv minus">${fmt(d.matGes)}</span></div>
+    <div class="row-item"><span class="rk">− Raummiete (${fmt(RAUMMIETE)}/Event × ${d.ev})</span><span class="rv minus">${fmt(d.raumGes)}</span></div>
+    <div class="row-item"><span class="rk">− Personalkosten</span><span class="rv minus">${fmt(d.personal)}</span></div>
+    <div class="row-item"><span class="rk">− Sonstige Betriebskosten</span><span class="rv minus">${fmt(SONSTIGE)}</span></div>
+    <div class="row-item" style="border-top:2px solid #e7e5e4;margin-top:4px;padding-top:6px">
+      <span class="rk">= Gewinn vor Steuern</span>
+      <span class="rv ${d.roh>=0?'plus':'minus'}">${fmt(d.roh)}</span>
+    </div>
+    <div class="row-item"><span class="rk">− Steuerpuffer (30%)</span><span class="rv minus">${fmt(d.steuer)}</span></div>
+    <div class="row-item"><span class="rk">= Netto Klangfeld</span><span class="rv ${d.netto>=0?'plus':'minus'}">${fmt(d.netto)}</span></div>
+    <div class="row-highlight">
+      <span class="rk" style="font-weight:600">→ Sparanteil (${Math.round(d.sparQ*100)}%)</span>
+      <span class="rv save">${fmt(d.spar)}/Monat</span>
+    </div>
+    <div class="row-highlight" style="margin-top:4px">
+      <span class="rk">→ Verbleibend nach Sparen</span>
+      <span class="rv ${d.verb>=0?'plus':'minus'}">${fmt(d.verb)}/Monat</span>
+    </div>
+  </div>`;
+}
+
+function update(){
+  const nMini = +document.getElementById('n_mini').value;
+  const nWerk = +document.getElementById('n_werk').value;
+  const s1q = +document.getElementById('s1q').value/100;
+  const s2q = +document.getElementById('s2q').value/100;
+  const s3q = +document.getElementById('s3q').value/100;
+  const extra = +document.getElementById('extra').value;
+
+  document.getElementById('n_mini-out').textContent = nMini+(nMini===1?' Person':' Personen');
+  document.getElementById('n_werk-out').textContent = nWerk+(nWerk===1?' Person':' Personen');
+  document.getElementById('s1q-out').textContent = Math.round(s1q*100)+'%';
+  document.getElementById('s2q-out').textContent = Math.round(s2q*100)+'%';
+  document.getElementById('s3q-out').textContent = Math.round(s3q*100)+'%';
+  document.getElementById('extra-out').textContent = extra.toLocaleString('de-DE')+' €';
+
+  const personal = nMini*KOSTEN_MINI + nWerk*KOSTEN_WERK;
+  const calcs = STAGES.map((s,i) => calc(s, personal, [s1q,s2q,s3q][i], extra));
+
+  document.getElementById('stage-details').innerHTML = calcs.map((d,i)=>stageCard(d,i)).join('');
+
+  const s3 = STAGES[2];
+  const fixMon = (s3.fix_t+s3.fix_o+s3.fix_v+MAT_PP*TEILN+RAUMMIETE)*s3.ev + personal + SONSTIGE;
+  const ZIEL = fixMon * 6;
+
+  const labels=[], data=[];
+  let rl=0, zielM=null;
+  rl=Math.min(rl+calcs[0].spar,ZIEL); labels.push('S1 M1'); data.push(Math.round(rl));
+  if(rl>=ZIEL&&!zielM) zielM=1;
+  rl=Math.min(rl+calcs[1].spar,ZIEL); labels.push('S2 M1'); data.push(Math.round(rl));
+  if(rl>=ZIEL&&!zielM) zielM=2;
+  for(let m=1;m<=60;m++){
+    rl=Math.min(rl+calcs[2].spar,ZIEL);
+    labels.push('S3 M'+m); data.push(Math.round(rl));
+    if(rl>=ZIEL&&!zielM) zielM=2+m;
+    if(rl>=ZIEL) break;
+  }
+
+  const pct=Math.round(data[data.length-1]/ZIEL*100);
+  const s3M=zielM?Math.max(0,zielM-2):null;
+  const cls=zielM?'green':pct<50?'red':'amber';
+
+  document.getElementById('cards').innerHTML=`
+    <div class="mcard">
+      <div class="label">Rücklagenziel (6 Monate)</div>
+      <div class="value">${fmt(ZIEL)}</div>
+      <div class="sub">6 × ${fmt(fixMon)}</div>
+    </div>
+    <div class="mcard">
+      <div class="label">Sparrate Stage 3</div>
+      <div class="value">${fmt(calcs[2].spar)}</div>
+      <div class="sub">pro Monat</div>
+    </div>
+    <div class="mcard ${cls}">
+      <div class="label">Ziel erreicht in</div>
+      <div class="value">${zielM?zielM+' Mon.':pct+'%'}</div>
+      <div class="sub">${zielM?`S1: 1, S2: 1, S3: ${s3M} Mon.`:'von Ziel erreicht'}</div>
+    </div>`;
+
+  let fazit='';
+  if(calcs[2].roh<0) fazit=`<div class="alert err">In Stage 3 entsteht Verlust (${fmt(calcs[2].roh)}/Mon.). Personal reduzieren oder Einnahmen steigern!</div>`;
+  else if(!zielM) fazit=`<div class="alert warn">Ziel in 60 Monaten Stage 3 nicht erreicht (${pct}%). Sparquote erhöhen oder sonstige Einnahmen steigern.</div>`;
+  else fazit=`<div class="alert ok">Ziel in ${zielM} Monaten erreichbar! Nach Sparen bleiben ${fmt(calcs[2].verb)}/Monat für Klangfeld.</div>`;
+  document.getElementById('fazit').innerHTML=fazit;
+
+  if(chart) chart.destroy();
+  chart=new Chart(document.getElementById('chart'),{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Rücklagen',data,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.08)',fill:true,tension:0.3,pointRadius:2,borderWidth:2},
+        {label:'Ziel',data:labels.map(()=>ZIEL),borderColor:'#E24B4A',borderDash:[6,4],borderWidth:1.5,pointRadius:0,fill:false}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+Math.round(c.parsed.y).toLocaleString('de-DE')+' €'}}},
+      scales:{
+        y:{beginAtZero:true,ticks:{callback:v=>Math.round(v/1000)+'k €',color:'#a8a29e'},grid:{color:'rgba(0,0,0,0.05)'}},
+        x:{ticks:{color:'#a8a29e',maxRotation:45,autoSkip:true,maxTicksLimit:14},grid:{display:false}}
+      }
+    }
+  });
+}
+
+update();
+</script>
+</body>
+</html>
